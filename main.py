@@ -24,31 +24,43 @@ class CustomNetwork(nn.Module):
     def __init__(
         self,
         feature_dim: int,
-        last_layer_dim_pi: int = 64,
-        last_layer_dim_vf: int = 64,
+        fnn_hidden_layer: int = 512,
+        fnn_last_layer: int = 256,
+        rnn_last_layer: int = 128,
     ):
         super(CustomNetwork, self).__init__()
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
-        self.latent_dim_pi = last_layer_dim_pi
-        self.latent_dim_vf = last_layer_dim_vf
+        self.latent_dim_pi = fnn_last_layer + rnn_last_layer
+        self.latent_dim_vf = self.latent_dim_pi
 
-        # Policy network
-        self.policy_net = nn.Sequential(
-            nn.Linear(feature_dim, last_layer_dim_pi), nn.ReLU()
+        # Make a nicer way to do this
+        self.d_set = [0, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62,
+           63, 64, 65, 66, 67, 68, 69, 70, 71, 72]
+
+        self.fnn = nn.Sequential (
+            nn.Linear(feature_dim, fnn_hidden_layer), nn.ReLU(),
+            nn.Linear(fnn_hidden_layer, fnn_last_layer)
         )
-        # Value network
-        self.value_net = nn.Sequential(
-            nn.Linear(feature_dim, last_layer_dim_vf), nn.ReLU()
-        )
+
+        self.rnn = nn.LSTMCell(len(self.d_set), rnn_last_layer)
+
+        self.out_relu = nn.ReLU()
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
         :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
             If all layers are shared, then ``latent_policy == latent_value``
         """
-        return self.policy_net(features), self.value_net(features)
+
+        #print(features.shape)
+
+        y_fnn = self.fnn(features)
+        y_rnn, _ = self.rnn(features[:, self.d_set])
+        y = self.out_relu(th.cat((y_fnn, y_rnn), dim=1))
+
+        return y, y
 
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
@@ -84,8 +96,8 @@ def main():
     env = Warehouse(seed, {"num_frames": 1})
     env.reset()
 
-    model = PPO("MlpPolicy", env, verbose=1)
-    #model = PPO(CustomActorCriticPolicy, env, verbose=1)
+    #model = PPO("MlpPolicy", env, verbose=1)
+    model = PPO(CustomActorCriticPolicy, env, verbose=1)
     model.learn(total_timesteps=100000)
 
     obs = env.reset()
