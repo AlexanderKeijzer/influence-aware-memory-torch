@@ -45,6 +45,7 @@ class CustomNetwork(nn.Module):
         )
 
         self.rnn = nn.LSTMCell(len(self.d_set), rnn_last_layer)
+        self.rnn_hidden_size = rnn_last_layer
 
         self.out_relu = nn.ReLU()
 
@@ -54,13 +55,34 @@ class CustomNetwork(nn.Module):
             If all layers are shared, then ``latent_policy == latent_value``
         """
 
-        #print(features.shape)
+        #print(features.shape[0])
 
         y_fnn = self.fnn(features)
-        y_rnn, _ = self.rnn(features[:, self.d_set])
-        y = self.out_relu(th.cat((y_fnn, y_rnn), dim=1))
+
+        if features.shape[0] != 1:
+
+            h_x = []
+            c_x = None
+            for idx, feature in enumerate(features):
+                if idx > 0:
+                    h_i, c_x = self.rnn(feature[None, self.d_set], (h_x[-1], c_x))
+                    h_x.append(h_i)
+                else:
+                    h_i, c_x = self.rnn(feature[None, self.d_set])
+                    h_x.append(h_i)
+            y = self.out_relu(th.cat((y_fnn, th.cat(h_x, dim=0)), dim=1))
+        else:
+            if hasattr(self, 'hidden_state'):
+                self.hidden_state, self.cell_state = self.rnn(features[:, self.d_set], (self.hidden_state, self.cell_state))
+            else:
+                self.hidden_state, self.cell_state = self.rnn(features[:, self.d_set])
+            y = self.out_relu(th.cat((y_fnn, self.hidden_state), dim=1))
 
         return y, y
+    
+    def reset_hidden(self):
+        self.hidden_state = th.zeros_like(self.hidden_state)
+        self.cell_state = th.zeros_like(self.cell_state)
 
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
@@ -97,7 +119,7 @@ def main():
     env.reset()
 
     #model = PPO("MlpPolicy", env, verbose=1)
-    model = PPO(CustomActorCriticPolicy, env, verbose=1)
+    model = PPO(CustomActorCriticPolicy, env, verbose=1, batch_size=8)
     model.learn(total_timesteps=100000)
 
     obs = env.reset()
