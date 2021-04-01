@@ -1,12 +1,12 @@
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
-import random
 import gym
 import torch as th
 from torch import nn
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.policies import ActorCriticPolicy
+from stable_baselines3.common.callbacks import CheckpointCallback
 
 from environments.warehouse.warehouse import Warehouse
 
@@ -118,16 +118,28 @@ def main():
     env = Warehouse(seed, {"num_frames": 1})
     env.reset()
 
+    model = PPO.load('logs/rl_model_400000_steps', env=env, device='cpu')
+
+    #print(model.policy_class.__dict__)
+
     #model = PPO("MlpPolicy", env, verbose=1)
-    model = PPO(CustomActorCriticPolicy, env, verbose=1, batch_size=8)
-    model.learn(total_timesteps=100000)
+    #model = PPO(CustomActorCriticPolicy, env, verbose=1, batch_size=8, device="cpu")
+
+    checkpoint_callback = CheckpointCallback(save_freq=100000, save_path='./logs/',
+                                         name_prefix='rl_model2')
+
+    model.learn(total_timesteps=600000,callback=checkpoint_callback)
 
     obs = env.reset()
+    total_reward = 0
     for i in range(1000):
         action, _states = model.predict(obs, deterministic=True)
         obs, reward, done, _ = env.step(action)
+        total_reward += reward
         env.render()
         if done:
+            print('Reward:', total_reward)
+            total_reward = 0
             obs = env.reset()
     """
     for i in range(100):
