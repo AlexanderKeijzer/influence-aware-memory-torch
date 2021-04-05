@@ -88,7 +88,7 @@ class Warehouse(gym.Env):
 
     @property
     def observation_space(self):
-        return spaces.MultiBinary(73) #Should clean this up
+        return spaces.Box(np.zeros(73), np.ones(73))#spaces.MultiBinary(73) #Should clean this up
 
     @property
     def action_space(self):

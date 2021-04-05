@@ -57,6 +57,8 @@ class CustomNetwork(nn.Module):
 
         #print(features.shape[0])
 
+        print(features.shape)
+
         y_fnn = self.fnn(features)
 
         if features.shape[0] != 1:
@@ -118,15 +120,15 @@ def main():
     env = Warehouse(seed, {"num_frames": 1})
     env.reset()
 
-    model = PPO.load('logs/rl_model_400000_steps', env=env, device='cpu')
+    #model = PPO.load('logs/rl_model_400000_steps', env=env, device='cpu')
 
     #print(model.policy_class.__dict__)
 
     #model = PPO("MlpPolicy", env, verbose=1)
-    #model = PPO(CustomActorCriticPolicy, env, verbose=1, batch_size=8, device="cpu")
+    model = PPO(CustomActorCriticPolicy, env, verbose=1, batch_size=8, device="cpu")
 
     checkpoint_callback = CheckpointCallback(save_freq=100000, save_path='./logs/',
-                                         name_prefix='rl_model2')
+                                         name_prefix='rl_model3')
 
     model.learn(total_timesteps=600000,callback=checkpoint_callback)
 
@@ -141,11 +143,6 @@ def main():
             print('Reward:', total_reward)
             total_reward = 0
             obs = env.reset()
-    """
-    for i in range(100):
-        obs, reward, done, _ = env.step(random.randint(0, 3))
-        env.render(delay=0.001)
-    """
     env.close()
 
 
