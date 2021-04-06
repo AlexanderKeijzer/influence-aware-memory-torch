@@ -31,30 +31,29 @@ def main():
     seed = 1
     env_name = "Warehouse-v0"
     num_processes = 8
-    gamma = 0.99 # reward discount factor
     log_dir ='./logs/'
-    recurrent = True
     eval_interval = None
     log_interval = 10
     use_linear_lr_decay = False
-    use_gae = False
-    gae_lambda = 0.95
     use_proper_time_limits = False
     save_dir = './trained_models/'
     use_cuda = True
 
     # PPO
-    clip_param = 0.2
-    ppo_epoch = 4
+    gamma = 0.99 # reward discount factor
+    clip_param = 0.1#0.2
+    ppo_epoch = 3#4
     num_mini_batch = 8
-    value_loss_coef = 0.5
+    value_loss_coef = 1#0.5
     entropy_coef = 0.01
-    lr = 7e-4
+    lr = 2.5e-4#7e-4
     eps = 1e-5
     max_grad_norm = 0.5
+    use_gae = True
+    gae_lambda = 0.95
+    num_steps = 8#5
 
     # Store
-    num_steps = 5
     num_env_steps = 10e6
     save_interval = 100
 
