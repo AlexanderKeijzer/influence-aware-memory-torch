@@ -49,11 +49,15 @@ class IAMBase(NNBase):
         return self.critic_linear(y), y, rnn_hxs
     
 class GRUBase(NNBase):
-    def __init__(self, num_inputs, rnn_last_layer=128):
+    def __init__(self, num_inputs, fnn_hidden_layer=640, rnn_last_layer=128):
         super(GRUBase, self).__init__(True, num_inputs, rnn_last_layer)
 
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
                                constant_(x, 0), np.sqrt(2))
+
+        self.fnn = nn.Sequential(
+            init_(nn.Linear(num_inputs, fnn_hidden_layer)), nn.Tanh()
+        )
 
         self.critic_linear = init_(nn.Linear(rnn_last_layer, 1))
 
@@ -63,8 +67,10 @@ class GRUBase(NNBase):
 
     def forward(self, inputs, rnn_hxs, masks):
         x = inputs
+
+        y = self.fnn(x)
         
-        y, rnn_hxs = self._forward_gru(x[..., self.dset], rnn_hxs, masks)
+        y, rnn_hxs = self._forward_gru(y, rnn_hxs, masks)
         y = self.gru_tanh(y)
 
         return self.critic_linear(y), y, rnn_hxs
