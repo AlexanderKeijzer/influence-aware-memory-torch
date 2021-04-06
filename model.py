@@ -47,3 +47,24 @@ class IAMBase(NNBase):
         y = torch.cat((y_fnn, y_rnn), dim=-1)
 
         return self.critic_linear(y), y, rnn_hxs
+    
+class GRUBase(NNBase):
+    def __init__(self, num_inputs, rnn_last_layer=128):
+        super(GRUBase, self).__init__(True, num_inputs, rnn_last_layer)
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0), np.sqrt(2))
+
+        self.critic_linear = init_(nn.Linear(rnn_last_layer, 1))
+
+        self.gru_tanh = nn.Tanh()
+
+        self.train()
+
+    def forward(self, inputs, rnn_hxs, masks):
+        x = inputs
+        
+        y, rnn_hxs = self._forward_gru(x[..., self.dset], rnn_hxs, masks)
+        y = self.gru_tanh(y)
+
+        return self.critic_linear(y), y, rnn_hxs
