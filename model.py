@@ -50,7 +50,7 @@ class IAMBase(NNBase):
     
 class GRUBase(NNBase):
     def __init__(self, num_inputs, fnn_hidden_layer=640, rnn_last_layer=128):
-        super(GRUBase, self).__init__(True, num_inputs, rnn_last_layer)
+        super(GRUBase, self).__init__(True, fnn_hidden_layer, rnn_last_layer)
 
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
                                constant_(x, 0), np.sqrt(2))
