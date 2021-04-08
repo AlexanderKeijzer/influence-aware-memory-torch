@@ -3,6 +3,7 @@ import glob
 import os
 import time
 from collections import deque
+import sys
 
 import gym
 import numpy as np
@@ -22,10 +23,10 @@ from stable_baselines3.common.monitor import Monitor
 
 from stable_baselines3.common.vec_env import VecEnvWrapper
 
-from model import IAMBase
+from model import IAMBase, GRUBase, FNNBase
 
 
-def main():
+def main(base=IAMBase):
 
     seed = 1
     env_name = "Warehouse-v0"
@@ -81,7 +82,7 @@ def main():
     actor_critic = Policy(
         envs.observation_space.shape,
         envs.action_space,
-        base=IAMBase,
+        base=base,
         base_kwargs={'dset': dset})
     actor_critic.to(device)
 
@@ -186,4 +187,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    base = IAMBase
+
+    for arg in sys.argv:
+        if arg == "IAM":
+            base = IAMBase
+            break
+        elif arg == "RNN":
+            base = GRUBase
+            break
+        elif arg == "FNN":
+            base = FNNBase
+            break
+    
+    print("Training using", base.__name__)
+
+    main(base)
