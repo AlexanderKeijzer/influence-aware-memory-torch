@@ -26,7 +26,7 @@ from stable_baselines3.common.vec_env import VecEnvWrapper
 from model import IAMBase, GRUBase, FNNBase
 
 
-def main(base=IAMBase):
+def main(base=IAMBase, num_frame_stack=None):
 
     seed = 1
     env_name = "Warehouse-v0"
@@ -77,7 +77,7 @@ def main(base=IAMBase):
     device = torch.device("cuda:0" if use_cuda else "cpu")
 
     envs = make_vec_envs(env_name, seed, num_processes,
-                        gamma, log_dir, device, False)
+                        gamma, log_dir, device, False, num_frame_stack=num_frame_stack)
 
     actor_critic = Policy(
         envs.observation_space.shape,
@@ -189,6 +189,7 @@ def main(base=IAMBase):
 if __name__ == "__main__":
 
     base = IAMBase
+    num_frame_stack = None
 
     for arg in sys.argv:
         if arg == "IAM":
@@ -200,7 +201,11 @@ if __name__ == "__main__":
         elif arg == "FNN":
             base = FNNBase
             break
+        elif arg == "FNN8":
+            base = FNNBase
+            num_frame_stack = 8
+            break
     
     print("Training using", base.__name__)
 
-    main(base)
+    main(base, num_frame_stack)
