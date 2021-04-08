@@ -47,7 +47,7 @@ def main():
     entropy_coef = 0.01
     lr = 2.5e-4#7e-4
     eps = 1e-5
-    max_grad_norm = None
+    max_grad_norm = float('inf')
     use_gae = True
     gae_lambda = 0.95
     num_steps = 8#5
