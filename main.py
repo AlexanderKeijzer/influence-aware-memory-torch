@@ -53,7 +53,7 @@ def main():
     num_steps = 8#5
 
     # Store
-    num_env_steps = 10e6
+    num_env_steps = 4e6
     save_interval = 100
 
     # IAM
@@ -74,9 +74,6 @@ def main():
 
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if use_cuda else "cpu")
-
-    #envs = Monitor(gym.make(env_name), os.path.join(log_dir, str(0)),
-    #                      allow_early_resets=False)
 
     envs = make_vec_envs(env_name, seed, num_processes,
                         gamma, log_dir, device, False)
