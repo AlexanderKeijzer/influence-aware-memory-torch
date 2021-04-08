@@ -74,3 +74,26 @@ class GRUBase(NNBase):
         y = self.gru_tanh(y)
 
         return self.critic_linear(y), y, rnn_hxs
+
+class FNNBase(NNBase):
+    def __init__(self, num_inputs, fnn_hidden_layer=640, fnn_last_layer=256):
+        super(FNNBase, self).__init__(False, fnn_hidden_layer, fnn_last_layer)
+
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0), np.sqrt(2))
+
+        self.fnn = nn.Sequential(
+            init_(nn.Linear(num_inputs, fnn_hidden_layer)), nn.Tanh(),
+            init_(nn.Linear(fnn_hidden_layer, fnn_last_layer)), nn.Tanh()
+        )
+
+        self.critic_linear = init_(nn.Linear(fnn_last_layer, 1))
+
+        self.train()
+
+    def forward(self, inputs, rnn_hxs, masks):
+        x = inputs
+
+        y = self.fnn(x)
+
+        return self.critic_linear(y), y, rnn_hxs
