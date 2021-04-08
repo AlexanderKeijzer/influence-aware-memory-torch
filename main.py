@@ -83,7 +83,7 @@ def main(base=IAMBase):
         envs.observation_space.shape,
         envs.action_space,
         base=base,
-        base_kwargs={'dset': dset})
+        base_kwargs=({'dset': dset} if base == IAMBase else {}))
     actor_critic.to(device)
 
     agent = algo.PPO(
